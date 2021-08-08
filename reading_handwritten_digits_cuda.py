@@ -5,6 +5,7 @@ train = datasets.MNIST("", train=True, download=True, transform=transforms.Compo
 test = datasets.MNIST("", train=False, download=True, transform=transforms.Compose([transforms.ToTensor()]))
 
 BATCH_SIZE = 10
+SAVE_PATH = "MNIST_model.pt"
 
 trainset = torch.utils.data.DataLoader(train, batch_size=BATCH_SIZE, shuffle=True)
 testset = torch.utils.data.DataLoader(test, batch_size=BATCH_SIZE, shuffle=True)
@@ -63,12 +64,17 @@ with torch.no_grad():
             total += 1
 print(f"Accuracy: {round(correct/total, 3)}")
 
+torch.save(net.state_dict(), SAVE_PATH)
+
+net_cpu = Net()
+net_cpu.load_state_dict(torch.load(SAVE_PATH), strict=False)
+
 correct, total = 0, 0
 with torch.no_grad():
     for X, y in testset:
-        output = net(X.view(-1, 28*28).to(device))
+        output = net_cpu(X.view(-1, 28*28))
         for idx, i in enumerate(output):
-            if torch.argmax(i) == y.to(device)[idx]:
+            if torch.argmax(i) == y[idx]:
                 correct += 1
             total += 1
 print(f"Validation: {round(correct/total, 3)}")
