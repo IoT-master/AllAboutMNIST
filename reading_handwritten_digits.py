@@ -35,33 +35,37 @@ import torch.optim as optim
 
 optimizer = optim.Adam(net.parameters(), lr=.001)
 
-EPOCHS = 3
+EPOCHS = 1
 
 for epocs in range(EPOCHS):
     for X, y in trainset:
         net.zero_grad()
         output = net(X.view(-1, 28*28))
-        loss = F.nll_loss(output, y)
-        loss.backward()
-        optimizer.step()
-    print(loss)
+        print(X.shape)
+        print(y)
+        print(y.shape)
+        break
+#         loss = F.nll_loss(output, y)
+#         loss.backward()
+#         optimizer.step()
+#     print(loss)
 
-correct, total = 0, 0
-with torch.no_grad():
-    for X, y in trainset:
-        output = net(X.view(-1, 28*28))
-        for idx, i in enumerate(output):
-            if torch.argmax(i) == y[idx]:
-                correct += 1
-            total += 1
-print(f"Accuracy: {round(correct/total, 3)}")
+# correct, total = 0, 0
+# with torch.no_grad():
+#     for X, y in trainset:
+#         output = net(X.view(-1, 28*28))
+#         for idx, i in enumerate(output):
+#             if torch.argmax(i) == y[idx]:
+#                 correct += 1
+#             total += 1
+# print(f"Accuracy: {round(correct/total, 3)}")
 
-correct, total = 0, 0
-with torch.no_grad():
-    for X, y in testset:
-        output = net(X.view(-1, 28*28))
-        for idx, i in enumerate(output):
-            if torch.argmax(i) == y[idx]:
-                correct += 1
-            total += 1
-print(f"Validation: {round(correct/total, 3)}")
+# correct, total = 0, 0
+# with torch.no_grad():
+#     for X, y in testset:
+#         output = net(X.view(-1, 28*28))
+#         for idx, i in enumerate(output):
+#             if torch.argmax(i) == y[idx]:
+#                 correct += 1
+#             total += 1
+# print(f"Validation: {round(correct/total, 3)}")
