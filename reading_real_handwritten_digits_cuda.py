@@ -83,25 +83,31 @@ class MNISTModel(nn.Module):
         x = F.relu(self.fc1(x))
         # [b, 60] ==> [b, 10]
         x = self.fc2(x)
-        return F.log_softmax(x, dim=1)
+        # F.log_softmax(x, dim=1)
+        return x
 
 
 if __name__ == "__main__":
-    train_dataset = MNISTDataset()
-
+    import torchvision
+    import matplotlib.pyplot as plt
+    import numpy as np
+    training_dataset = MNISTDataset()
     model = MNISTModel()
+    batch_loader_params = {
+        "batch_size": 50,
+        "shuffle": True,
+        "num_workers": 0 if platform.system() == 'Windows' else 2
+    }
+    training_batches = DataLoader(training_dataset, **batch_loader_params)
+    
+    batch_samples = iter(training_batches)
+    samples = batch_samples.next()
+    print(samples['image'].shape)
+    datset_batch = torchvision.utils.make_grid(samples['image'])
 
-    sample = next(iter(train_dataset))
-    image = sample['image']
-    labels = sample['label']
-    print(image.shape, labels.shape)
-    image_batch = image.unsqueeze(0)
-
-    preds = model(image_batch)
-    loss = F.cross_entropy(preds, labels)
-    print(loss.item())
-
-    print(model.conv1.weight.grad)
-    loss.backward()
-    print(model.conv1.weight.grad)
-    print(model.conv1.weight.grad.shape)
+    def imshow(img):
+        npimg = img.numpy()
+        plt.imshow(np.transpose(npimg, (1, 2, 0)))
+        plt.show()
+    print(samples['label'])
+    imshow(torchvision.utils.make_grid(datset_batch))
