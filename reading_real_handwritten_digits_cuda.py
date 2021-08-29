@@ -9,12 +9,18 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 import platform
 
+if torch.cuda.is_available():
+    device = torch.device("cuda:0")
+    print("CUDA detected")
+else:
+    device = torch.device("cpu")
+    print("GPU NOT detected!")
+
 MNIST_DIR = "MNISTDataSet"
 
 testing_df = pd.read_csv(Path(MNIST_DIR).joinpath('test.csv'))
 
 mnist_dir = Path.cwd().joinpath(MNIST_DIR)
-
 
 def spatial_size(input_size: int, kernel_size: int, stride: int = 1, padding: int = 0):
     # https://cs231n.github.io/convolutional-networks/
@@ -51,11 +57,11 @@ class MNISTDataset(Dataset):
         label = self.training_df['label'].iloc[index]
         sample = {
             'image': data,
-            'label': torch.tensor([label])
+            'label': torch.tensor(label)
         }
 
         if self.transform:
-            sample['image'] = self.transform(sample['image'])
+            pass
 
         return sample
 
@@ -86,28 +92,39 @@ class MNISTModel(nn.Module):
         # F.log_softmax(x, dim=1)
         return x
 
-
 if __name__ == "__main__":
-    import torchvision
-    import matplotlib.pyplot as plt
-    import numpy as np
     training_dataset = MNISTDataset()
-    model = MNISTModel()
+    model = MNISTModel().to(device)
     batch_loader_params = {
-        "batch_size": 50,
+        "batch_size": len(training_dataset),
         "shuffle": True,
-        "num_workers": 0 if platform.system() == 'Windows' else 2
+        "num_workers": 1
     }
     training_batches = DataLoader(training_dataset, **batch_loader_params)
-    
-    batch_samples = iter(training_batches)
-    samples = batch_samples.next()
-    print(samples['image'].shape)
-    datset_batch = torchvision.utils.make_grid(samples['image'])
+    print(model)
 
-    def imshow(img):
-        npimg = img.numpy()
-        plt.imshow(np.transpose(npimg, (1, 2, 0)))
-        plt.show()
-    print(samples['label'])
-    imshow(torchvision.utils.make_grid(datset_batch))
+    optimizer = optim.Adam(model.parameters(), lr=0.01)
+
+    total_loss = 0
+    total_correct = 0
+
+    def get_num_correct(preds, labels):
+        return preds.argmax(dim=1).eq(labels).sum().item()
+
+    for epoch in range(5):
+        for batch in training_batches:
+            images = batch['image'].to(device)
+            labels = batch['label'].to(device)
+
+            preds = model(images)  # Pass Batch
+            loss = F.cross_entropy(preds, labels)  # Calculate Loss
+
+            optimizer.zero_grad()  # PyTorch Adds to this, so you have to zero it out after one batch
+            loss.backward()  # Calculate Gradients
+            optimizer.step()  # Update Weights
+
+            total_loss += loss.item()
+            total_correct += get_num_correct(preds, labels)
+
+        print("epoch:", epoch, "total_correct:",
+            total_correct, "loss:", total_loss)

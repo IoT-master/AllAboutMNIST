@@ -59,7 +59,8 @@ class TestingHWDigits(unittest.TestCase):
         loss.backward()
         self.assertEqual(self.model.conv1.weight.grad.shape, torch.Size([20, 1, 5, 5]), 'Conv1 shape must be consistant ')
     
-    def running_one_sample_repeatedly_looking_for_correct_output(self):
+    @unittest.skip
+    def test_running_one_sample_repeatedly_looking_for_correct_output(self):
         '''This isn't really a test, but it shows how the model will adapt to the same sample feeding it into itself. Look at the preds matrix, and see the changes during
         each iteration'''
         optimizer = optim.Adam(self.model.parameters(), lr=0.01)
@@ -80,6 +81,32 @@ class TestingHWDigits(unittest.TestCase):
 
             optimizer.step()
             optimizer.zero_grad()
+
+    @unittest.skip
+    def test_running_data_loader(self):
+        import torchvision
+        import matplotlib.pyplot as plt
+        import numpy as np
+        training_dataset = MNISTDataset()
+        model = MNISTModel()
+        batch_loader_params = {
+            "batch_size": 50,
+            "shuffle": True,
+            "num_workers": 0 if platform.system() == 'Windows' else 2
+        }
+        training_batches = DataLoader(training_dataset, **batch_loader_params)
+        
+        batch_samples = iter(training_batches)
+        samples = batch_samples.next()
+        print(samples['image'].shape)
+        datset_batch = torchvision.utils.make_grid(samples['image'])
+
+        def imshow(img):
+            npimg = img.numpy()
+            plt.imshow(np.transpose(npimg, (1, 2, 0)))
+            plt.show()
+        print(samples['label'])
+        imshow(torchvision.utils.make_grid(datset_batch))
 
     def tearDown(self) -> None:
         pass
